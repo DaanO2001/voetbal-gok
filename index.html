@@ -386,14 +386,13 @@ select option{background:#1a1a2e;}
 
 /* TOAST */
 #toast{
-  position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-6px);
-  background:rgba(10,50,55,0.92);border:1px solid var(--border-orange);
-  color:var(--oranje);font-weight:600;font-size:12px;
-  padding:8px 18px;border-radius:999px;z-index:9999;
-  opacity:0;transition:opacity .25s,transform .25s;
+  position:fixed;top:74px;left:50%;transform:translateX(-50%) translateY(-8px);
+  background:var(--oranje);
+  color:#04252A;font-weight:700;font-size:13px;
+  padding:10px 20px;border-radius:999px;z-index:9999;
+  opacity:0;transition:opacity .2s,transform .2s;
   pointer-events:none;white-space:nowrap;
-  backdrop-filter:blur(8px);
-  box-shadow:0 2px 12px rgba(0,0,0,0.3);
+  box-shadow:0 4px 18px rgba(103,242,143,0.35);
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -602,23 +601,28 @@ select option{background:#1a1a2e;}
 
   <!-- VRAGEN -->
   <div class="card">
-    <div class="card-title">Vragen <span class="badge" id="vraagCount">0</span></div>
-    <div id="adminVragenList"></div>
-    <div class="divider"></div>
-    <div onclick="toggleEigenVraag()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0 8px;">
-      <div class="card-title" style="margin-bottom:0;">+ Eigen vraag toevoegen</div>
-      <span id="eigenVraagArrow" style="color:var(--muted);font-size:14px;transition:transform .25s;">▼</span>
+    <div onclick="toggleVragenAdmin()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
+      <div class="card-title" style="margin-bottom:0;">Vragen <span class="badge" id="vraagCount">0</span></div>
+      <span id="vragenArrow" style="color:var(--muted);font-size:14px;transition:transform .25s;">▼</span>
     </div>
-    <div id="eigenVraagBody" style="display:none;">
-      <input type="text" id="eigenVraagInput" placeholder="bijv. Wie pakt de 2e gele kaart?" style="margin-bottom:8px;">
-      <select id="eigenVraagType" style="margin-bottom:8px;">
-        <option value="team">Antwoord: team/land</option>
-        <option value="speler">Antwoord: spelernaam (vrij tekst)</option>
-        <option value="jn">Antwoord: Ja / Nee</option>
-        <option value="getal">Antwoord: getal</option>
-        <option value="vrij">Antwoord: vrije tekst</option>
-      </select>
-      <button class="btn" onclick="addEigenVraag()">+ Toevoegen</button>
+    <div id="vragenBody" style="display:none;margin-top:12px;">
+      <div id="adminVragenList"></div>
+      <div class="divider"></div>
+      <div onclick="toggleEigenVraag()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0 8px;">
+        <div class="card-title" style="margin-bottom:0;">+ Eigen vraag toevoegen</div>
+        <span id="eigenVraagArrow" style="color:var(--muted);font-size:14px;transition:transform .25s;">▼</span>
+      </div>
+      <div id="eigenVraagBody" style="display:none;">
+        <input type="text" id="eigenVraagInput" placeholder="bijv. Wie pakt de 2e gele kaart?" style="margin-bottom:8px;">
+        <select id="eigenVraagType" style="margin-bottom:8px;">
+          <option value="team">Antwoord: team/land</option>
+          <option value="speler">Antwoord: spelernaam (vrij tekst)</option>
+          <option value="jn">Antwoord: Ja / Nee</option>
+          <option value="getal">Antwoord: getal</option>
+          <option value="vrij">Antwoord: vrije tekst</option>
+        </select>
+        <button class="btn" onclick="addEigenVraag()">+ Toevoegen</button>
+      </div>
     </div>
   </div>
 
@@ -702,7 +706,7 @@ select option{background:#1a1a2e;}
   <div class="player-selector" id="playerSelector"></div>
   <div id="invullenContent"><div class="empty"><span>👤</span>Voeg spelers toe via Admin.</div></div>
   <div class="fab-row" id="invullenFab" style="display:none;">
-    <button class="btn" onclick="saveAndNextPlayer()">💾 Opslaan</button>
+    <button class="btn" id="invullenFabBtn" onclick="handleSaveBtn()">💾 Opslaan</button>
   </div>
 </div>
 
@@ -718,12 +722,11 @@ select option{background:#1a1a2e;}
 const STORAGE_KEY = 'wedstrijdgok_v3';
 
 const VAST_VRAGEN = [
-  {id:'v1',tekst:'Wie scoort als eerste?',type:'team',vast:true},
+  {id:'v1',tekst:'__TEAM1_LABEL__ scoort als eerste',type:'team',vast:true},
   {id:'v2',tekst:'Welke speler scoort het eerste doelpunt?',type:'speler',vast:true},
-  {id:'v3',tekst:'Wie pakt de eerste gele kaart?',type:'speler',vast:true},
-  {id:'v4',tekst:'Komt er een rode kaart?',type:'jn',vast:true},
-  {id:'v5',tekst:'Wie pakt de rode kaart?',type:'speler',vast:true,dependsOn:{id:'v4',waarde:'Ja'}},
-  {id:'v6',tekst:'Eindstand — wie wint de wedstrijd?',type:'team3',vast:true},
+  {id:'v3',tekst:'Welke speler pakt de eerste gele kaart?',type:'speler',vast:true},
+  {id:'v4',tekst:'Komt er een rode kaart?',type:'jn_met_sub',vast:true,subVraag:{id:'v5',tekst:'Wie pakt de rode kaart?',type:'speler'}},
+  {id:'v6',tekst:'Eindstand',type:'score',vast:true},
 ];
 
 let state = {
@@ -890,6 +893,13 @@ function capitalizeInput(el){
 
 
 // ── COLLAPSIBLES ──
+function toggleVragenAdmin(){
+  const body = document.getElementById('vragenBody');
+  const arrow = document.getElementById('vragenArrow');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  arrow.style.transform = open ? 'rotate(180deg)' : '';
+}
 function toggleEigenVraag(){
   const body = document.getElementById('eigenVraagBody');
   const arrow = document.getElementById('eigenVraagArrow');
@@ -1185,7 +1195,7 @@ function renderAdminVragen(){
           ontouchend="touchDragEnd(event)">⠿</div>
         <div class="vraag-num">${i+1}</div>
         <div style="flex:1;">
-          <div class="vraag-text">${v.tekst}</div>
+          <div class="vraag-text">${getVraagTekst(v)}</div>
           <div class="vraag-meta">
             <span class="tag">${typeLabel(v.type)}</span>
             <span>${v.vast?'Vast':'Eigen'}</span>
@@ -1227,7 +1237,7 @@ function renderAdminUitslag(){
       <div onclick="toggleUitslagVraag('uv_${v.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;gap:10px;">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
           <div style="width:20px;height:20px;border-radius:50%;background:var(--surface3);color:var(--muted2);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
-          <div style="font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.tekst}</div>
+          <div style="font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${getVraagTekst(v)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           ${filled ? `<span style="font-size:11px;font-weight:700;color:var(--oranje);background:var(--oranje-dim);border-radius:999px;padding:2px 8px;">${state.uitslag[v.id]}</span>` : ''}
@@ -1235,7 +1245,7 @@ function renderAdminUitslag(){
         </div>
       </div>
       <div id="uv_${v.id}" style="display:none;padding:0 14px 14px;">
-        ${renderAntwoordInput(v,state.uitslag[v.id]||'','uit')}
+        ${renderAntwoordInput(v,state.uitslag[v.id]||'','uit',state.uitslag)}
       </div>
     </div>`;
   }).join('');
@@ -1249,8 +1259,21 @@ function toggleUitslagVraag(id){
 }
 function saveUitslag(){
   state.vragen.forEach(v=>{
-    const el=document.getElementById('uit_'+v.id);
-    if(el) state.uitslag[v.id]=el.value;
+    if(v.type==='score'){
+      const e1=document.getElementById('uit_'+v.id+'_1');
+      const e2=document.getElementById('uit_'+v.id+'_2');
+      if(e1||e2) state.uitslag[v.id]=`${e1?e1.value:''}${e2?'-'+e2.value:''}`;
+    } else if(v.type==='jn_met_sub'){
+      const el=document.getElementById('uit_'+v.id);
+      if(el) state.uitslag[v.id]=el.value;
+      if(v.subVraag){
+        const sub=document.getElementById('uit_'+v.subVraag.id);
+        if(sub) state.uitslag[v.subVraag.id]=sub.value;
+      }
+    } else {
+      const el=document.getElementById('uit_'+v.id);
+      if(el) state.uitslag[v.id]=el.value;
+    }
   });
   saveState();
   showToast('🏁 Uitslag opgeslagen!');
@@ -1311,12 +1334,34 @@ function startPlayerTurn(){
     editingPlayer = state.players[tourIndex].id;
     state.activePlayer = editingPlayer;
   }
+  updateFabLabel();
   renderInvullen();
 }
 
 function popupOverlayClick(e){
   // Don't close on overlay click — player must press button
 }
+
+function handleSaveBtn(){
+  // If editing via potloodje — just save and go back to overview
+  if(editingPlayer){
+    saveCurrentVoorspelling(false);
+    const name = state.players.find(x=>x.id===state.activePlayer)?.name;
+    showToast('💾 Voorspelling van '+name+' opgeslagen!');
+    editingPlayer = null;
+    renderInvullen();
+  } else {
+    // Tour mode — go to next player
+    saveAndNextPlayer();
+  }
+}
+
+function updateFabLabel(){
+  const btn = document.getElementById('invullenFabBtn');
+  if(!btn) return;
+  btn.textContent = editingPlayer ? '💾 Opslaan' : '💾 Opslaan & volgende';
+}
+
 
 function backToOverview(){
   saveCurrentVoorspelling(false);
@@ -1412,6 +1457,7 @@ function editPlayer(id){
   editingPlayer = id;
   state.activePlayer = id;
   document.getElementById('invullenFab').style.display='flex';
+  updateFabLabel();
   renderInvullenForm();
 }
 
@@ -1437,7 +1483,7 @@ function renderInvullenForm(){
       <div onclick="togglePredVraag('pv_${v.id}','${v.id}')" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;gap:10px;">
         <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;">
           <div style="width:20px;height:20px;border-radius:50%;background:var(--surface2);color:var(--muted2);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
-          <div style="font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.tekst}</div>
+          <div style="font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${getVraagTekst(v)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           ${filled ? `<span style="font-size:11px;font-weight:700;color:var(--oranje);background:var(--oranje-dim);border-radius:999px;padding:2px 8px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${isGeheim?'🔒':waarde}</span>` : ''}
@@ -1445,7 +1491,7 @@ function renderInvullenForm(){
         </div>
       </div>
       <div id="pv_${v.id}" style="display:none;padding:0 14px 14px;">
-        ${renderAntwoordInput(v,waarde,'pred')}
+        ${renderAntwoordInput(v,waarde,'pred',opgeslagen)}
       </div>
     </div>`;
   }).join('');
@@ -1495,7 +1541,8 @@ function toggleSecret(pid){
 }
 
 function getVisibleVragen(antwoorden){
-  // antwoorden = object {vraagId: waarde} — used to check dependsOn conditions
+  // Filter out vragen that have a dependsOn not met
+  // (v5 is now embedded in v4 as subVraag, so no top-level dependsOn needed)
   return state.vragen.filter(v=>{
     if(!v.dependsOn) return true;
     const dep = antwoorden[v.dependsOn.id] || '';
@@ -1503,18 +1550,68 @@ function getVisibleVragen(antwoorden){
   });
 }
 
-function renderAntwoordInput(v,waarde,prefix){
-  const t1=state.team1||'Team 1';
-  const t2=state.team2||'Team 2';
+function getVraagTekst(v){
+  // Replace __TEAM1_LABEL__ with dynamic label based on mode
+  const label = state.mode==='landen' ? 'Welk land' : 'Welk team';
+  return v.tekst.replace('__TEAM1_LABEL__', label);
+}
+
+function renderAntwoordInput(v, waarde, prefix, antwoorden){
+  const t1=state.team1||(state.mode==='landen'?'Land 1':'Team 1');
+  const t2=state.team2||(state.mode==='landen'?'Land 2':'Team 2');
   const id=prefix+'_'+v.id;
-  // For pred prefix: if this question has dependents, re-render on change
-  const onchangeExtra = (prefix==='pred' && state.vragen.some(q=>q.dependsOn&&q.dependsOn.id===v.id))
-    ? `onchange="saveCurrentVoorspelling(false);renderInvullenForm();"` : '';
-  if(v.type==='team') return `<select id="${id}" ${onchangeExtra}><option value="">Kies...</option><option value="${t1}" ${waarde===t1?'selected':''}>${t1}</option><option value="${t2}" ${waarde===t2?'selected':''}>${t2}</option></select>`;
-  if(v.type==='team3') return `<select id="${id}" ${onchangeExtra}><option value="">Kies...</option><option value="${t1}" ${waarde===t1?'selected':''}>${t1}</option><option value="${t2}" ${waarde===t2?'selected':''}>${t2}</option><option value="Gelijkspel" ${waarde==='Gelijkspel'?'selected':''}>Gelijkspel</option></select>`;
-  if(v.type==='jn') return `<select id="${id}" ${onchangeExtra}><option value="">Kies...</option><option value="Ja" ${waarde==='Ja'?'selected':''}>Ja</option><option value="Nee" ${waarde==='Nee'?'selected':''}>Nee</option></select>`;
+  const onchangeRender = prefix==='pred' ? `onchange="saveCurrentVoorspelling(false);renderInvullenForm();"` : '';
+
+  if(v.type==='team') return `<select id="${id}" ${onchangeRender}><option value="">Kies...</option><option value="${t1}" ${waarde===t1?'selected':''}>${t1}</option><option value="${t2}" ${waarde===t2?'selected':''}>${t2}</option></select>`;
+  if(v.type==='team3') return `<select id="${id}"><option value="">Kies...</option><option value="${t1}" ${waarde===t1?'selected':''}>${t1}</option><option value="${t2}" ${waarde===t2?'selected':''}>${t2}</option><option value="Gelijkspel" ${waarde==='Gelijkspel'?'selected':''}>Gelijkspel</option></select>`;
+  if(v.type==='jn') return `<select id="${id}" ${onchangeRender}><option value="">Kies...</option><option value="Ja" ${waarde==='Ja'?'selected':''}>Ja</option><option value="Nee" ${waarde==='Nee'?'selected':''}>Nee</option></select>`;
+
+  if(v.type==='jn_met_sub'){
+    const sub = v.subVraag;
+    const subWaarde = antwoorden ? (antwoorden[sub.id]||'') : '';
+    const subFilled = subWaarde !== '';
+    const showSub = waarde.toLowerCase()==='ja';
+    return `<select id="${id}" ${onchangeRender}><option value="">Kies...</option><option value="Ja" ${waarde==='Ja'?'selected':''}>Ja</option><option value="Nee" ${waarde==='Nee'?'selected':''}>Nee</option></select>
+    ${showSub ? `<div style="margin-top:10px;padding:10px 12px;background:var(--surface3);border-radius:10px;border:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">↳ ${sub.tekst}</div>
+      <input type="text" id="${prefix}_${sub.id}" value="${subWaarde}" placeholder="Naam speler..." autocapitalize="words" oninput="capitalizeInput(this)" style="border-radius:10px;">
+    </div>` : ''}`;
+  }
+
+  if(v.type==='score'){
+    const parts = waarde ? waarde.split('-') : ['',''];
+    const s1 = parts[0]||''; const s2 = parts[1]||'';
+    return `<div style="display:flex;align-items:center;gap:10px;">
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600;">${t1||'Team 1'}</div>
+        <input type="text" inputmode="numeric" id="${id}_1" value="${s1}" placeholder="0"
+          style="text-align:center;font-size:22px;font-weight:800;padding:14px 8px;border-radius:12px;"
+          oninput="syncScore('${id}')">
+      </div>
+      <div style="font-size:28px;font-weight:800;color:var(--muted);font-family:'Oswald',sans-serif;">—</div>
+      <div style="flex:1;text-align:center;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600;">${t2||'Team 2'}</div>
+        <input type="text" inputmode="numeric" id="${id}_2" value="${s2}" placeholder="0"
+          style="text-align:center;font-size:22px;font-weight:800;padding:14px 8px;border-radius:12px;"
+          oninput="syncScore('${id}')">
+      </div>
+    </div>`;
+  }
+
   if(v.type==='getal') return `<input type="text" inputmode="numeric" id="${id}" value="${waarde}" placeholder="bijv. 3">`;
-  return `<input type="text" id="${id}" value="${waarde}" placeholder="Jouw antwoord...">`;
+  // vrij tekst — capitalize each word
+  return `<input type="text" id="${id}" value="${waarde}" placeholder="Jouw antwoord..." autocapitalize="words" oninput="capitalizeWordsInput(this)">`;
+}
+
+function syncScore(baseId){
+  // Combine two score inputs into single value "X-Y" stored on baseId element
+  // We'll read them on save instead
+}
+
+function capitalizeWordsInput(el){
+  const pos = el.selectionStart;
+  el.value = el.value.replace(/\b\w/g, c => c.toUpperCase());
+  el.setSelectionRange(pos, pos);
 }
 
 function saveCurrentVoorspelling(alert){
@@ -1522,8 +1619,22 @@ function saveCurrentVoorspelling(alert){
   const pred=state.voorspellingen[state.activePlayer];
   if(!pred) return;
   state.vragen.forEach(v=>{
-    const el=document.getElementById('pred_'+v.id);
-    if(el) pred[v.id]=el.value;
+    if(v.type==='score'){
+      const e1=document.getElementById('pred_'+v.id+'_1');
+      const e2=document.getElementById('pred_'+v.id+'_2');
+      if(e1||e2) pred[v.id]=`${e1?e1.value:''}${e2?'-'+e2.value:''}`;
+    } else if(v.type==='jn_met_sub'){
+      const el=document.getElementById('pred_'+v.id);
+      if(el) pred[v.id]=el.value;
+      // also save sub
+      if(v.subVraag){
+        const sub=document.getElementById('pred_'+v.subVraag.id);
+        if(sub) pred[v.subVraag.id]=sub.value;
+      }
+    } else {
+      const el=document.getElementById('pred_'+v.id);
+      if(el) pred[v.id]=el.value;
+    }
   });
   saveState();
   if(alert){
