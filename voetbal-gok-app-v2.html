@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>🎰 Dolle Daan's Gokapp</title>
+<title>🎰 Golazo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
@@ -41,39 +41,40 @@ body{
   overflow-x:hidden;
 }
 
+/* Vaste donkere achtergrond */
 body::before{
   content:'';position:fixed;inset:0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 50%, #062f36 0%, #04252A 70%),
-    radial-gradient(ellipse 40% 40% at 80% 20%, rgba(103,242,143,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 20% 80%, rgba(242,201,76,0.04) 0%, transparent 60%);
+  background:#04252A;
   pointer-events:none;z-index:0;
-  animation:bgShift 8s ease-in-out infinite alternate;
 }
-@keyframes bgShift{
-  0%{background:
-    radial-gradient(ellipse 80% 60% at 50% 50%, #062f36 0%, #04252A 70%),
-    radial-gradient(ellipse 50% 50% at 80% 20%, rgba(103,242,143,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(242,201,76,0.05) 0%, transparent 60%);}
-  50%{background:
-    radial-gradient(ellipse 80% 60% at 40% 60%, #073540 0%, #04252A 70%),
-    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(103,242,143,0.09) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 60% at 10% 90%, rgba(242,201,76,0.06) 0%, transparent 55%);}
-  100%{background:
-    radial-gradient(ellipse 80% 60% at 60% 40%, #062f36 0%, #04252A 70%),
-    radial-gradient(ellipse 50% 50% at 70% 30%, rgba(103,242,143,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 50% at 30% 70%, rgba(242,201,76,0.05) 0%, transparent 60%);}
+
+/* Groene glow — beweegt langzaam */
+body::after{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 55% 45% at 75% 15%, rgba(103,242,143,0.13) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 55% at 25% 85%, rgba(242,201,76,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(6,50,58,0.9) 0%, transparent 80%);
+  pointer-events:none;z-index:0;
+  animation:glowDrift 10s ease-in-out infinite;
+}
+@keyframes glowDrift{
+  0%  { transform:translate(0px, 0px) scale(1); opacity:1; }
+  25% { transform:translate(-18px, 12px) scale(1.03); opacity:0.85; }
+  50% { transform:translate(12px, -16px) scale(0.97); opacity:1; }
+  75% { transform:translate(-8px, 20px) scale(1.04); opacity:0.9; }
+  100%{ transform:translate(0px, 0px) scale(1); opacity:1; }
 }
 
 /* ADMIN TOGGLE */
 .admin-toggle{
-  position:fixed;top:14px;right:16px;z-index:200;
   background:var(--surface2);border:1px solid var(--border);
   border-radius:999px;padding:7px 14px;
   font-size:11px;font-weight:800;color:var(--muted2);
   cursor:pointer;transition:all .2s;letter-spacing:.8px;
   display:flex;align-items:center;gap:6px;
   font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;
+  flex-shrink:0;
 }
 .admin-toggle:active{transform:scale(.95);}
 .admin-toggle.active{color:var(--oranje);border-color:var(--border-orange);background:var(--oranje-dim);}
@@ -101,9 +102,9 @@ body::before{
 
 /* HEADER */
 header{
-  background:rgba(18,18,31,0.97);backdrop-filter:blur(10px);
+  background:rgba(4,37,42,0.97);backdrop-filter:blur(10px);
   border-bottom:1px solid var(--border);
-  padding:16px 20px 12px;position:sticky;top:0;z-index:100;
+  padding:14px 16px 12px;position:sticky;top:0;z-index:100;
   animation:slideDown .35s ease;
 }
 @keyframes slideDown{from{transform:translateY(-16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
@@ -514,11 +515,6 @@ select option{background:#1a1a2e;}
 </head>
 <body>
 
-<!-- ADMIN BUTTON -->
-<button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdmin()">
-  <span class="admin-dot"></span> ADMIN
-</button>
-
 <!-- ═══════════════ ADMIN SCREEN ═══════════════ -->
 <div class="admin-screen" id="adminScreen">
   <div class="admin-header">
@@ -618,11 +614,18 @@ select option{background:#1a1a2e;}
 
 <!-- ═══════════════ MAIN APP ═══════════════ -->
 <header>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <h1>Dolle Daan's Gokapp</h1>
-    <span style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(242,201,76,.35);border-radius:6px;padding:3px 8px;white-space:nowrap;flex-shrink:0;">BETA</span>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <h1>Golazo</h1>
+        <span style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(242,201,76,.35);border-radius:6px;padding:3px 8px;white-space:nowrap;flex-shrink:0;">BETA</span>
+      </div>
+      <div class="header-sub">Voorspel. Vergelijk. Claim de eer.</div>
+    </div>
+    <button class="admin-toggle" id="adminToggleBtn" onclick="toggleAdmin()">
+      <span class="admin-dot"></span> ADMIN
+    </button>
   </div>
-  <div class="header-sub">Voorspel. Vergelijk. Claim de eer.</div>
 </header>
 
 <div class="tabs">
