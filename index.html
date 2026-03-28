@@ -386,7 +386,7 @@ select option{background:#1a1a2e;}
 
 /* TOAST */
 #toast{
-  position:fixed;top:74px;left:50%;transform:translateX(-50%) translateY(-8px);
+  position:fixed;top:112px;left:50%;transform:translateX(-50%) translateY(-8px);
   background:var(--oranje);
   color:#04252A;font-weight:700;font-size:13px;
   padding:10px 20px;border-radius:999px;z-index:9999;
@@ -1674,8 +1674,12 @@ function renderResultaat(){
     const details=vragenSorted.filter(v=>visVragen.find(vv=>vv.id===v.id)).map(v=>{
       const antwoord=pred[v.id]||'';
       const correct=state.uitslag[v.id]||'';
-      const isGoed=antwoord.trim().toLowerCase()===correct.trim().toLowerCase()&&correct!=='';
-      if(correct!=='') totaal++;
+      // For score: only count if uitslag has actual numbers
+      const correctValid = v.type==='score'
+        ? (()=>{ const p=correct.split('-'); return p[0].trim()!==''&&p[1]&&p[1].trim()!==''; })()
+        : correct!=='';
+      const isGoed=antwoord.trim().toLowerCase()===correct.trim().toLowerCase()&&correctValid;
+      if(correctValid) totaal++;
       if(isGoed) goed++;
       return {v,antwoord,correct,isGoed};
     });
@@ -1684,7 +1688,13 @@ function renderResultaat(){
 
   // ── Per-vraag overzicht (sorted, ingevuld first) ──
   const perVraagHtml = vragenSorted.map(v=>{
-    const correct = state.uitslag[v.id]||'';
+    let correct = state.uitslag[v.id]||'';
+    // For score type: treat as empty if both sides are blank
+    if(v.type==='score'){
+      const parts = correct.split('-');
+      if(!parts[0].trim() && (!parts[1] || !parts[1].trim())) return '';
+      // Format nicely for display: "2 - 1"
+    }
     if(!correct) return '';
     const winnaars = state.players.filter(p=>{
       const pred = state.voorspellingen[p.id]||{};
@@ -1714,8 +1724,8 @@ function renderResultaat(){
     return `
       <div class="vraag-summary">
         <div class="vraag-summary-header">
-          <div class="vraag-summary-tekst">${v.tekst}</div>
-          <div class="vraag-summary-antwoord">✓ ${correct}</div>
+          <div class="vraag-summary-tekst">${getVraagTekst(v)}</div>
+          <div class="vraag-summary-antwoord">✓ ${v.type==='score' ? correct.replace('-',' — ') : correct}</div>
         </div>
         <div class="vraag-summary-winners">
           ${chips || '<div class="vraag-summary-none">Niemand had dit goed 😬</div>'}
@@ -1738,7 +1748,7 @@ function renderResultaat(){
       <div class="result-rows">
         ${s.details.map(d=>`
           <div class="result-row">
-            <div class="result-vraag">${d.v.tekst}</div>
+            <div class="result-vraag">${getVraagTekst(d.v)}</div>
             <div class="result-antwoord">${d.antwoord||'<span style="color:var(--muted)">—</span>'}</div>
             <div class="result-icon">${d.correct===''?'⬜':d.isGoed?'✅':'❌'}</div>
           </div>`).join('')}
@@ -1757,7 +1767,7 @@ function renderResultaat(){
       schaamtepaalHtml = `
         <div class="schaamtepaal-card">
           <span class="schaamtepaal-emoji">${emoji}</span>
-          <div class="schaamtepaal-title">Schaamtepaal</div>
+          <div class="schaamtepaal-title">Wall of Shame</div>
           <div class="schaamtepaal-name">${laatste.p.name}</div>
           <div class="schaamtepaal-sub">${laatste.goed} van ${laatste.totaal} goed · ${pct}% raak</div>
         </div>`;
@@ -1824,6 +1834,41 @@ function showToast(msg){
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
+
+
+// ── ENTER KEY NAVIGATION IN INVULLEN FORM ──
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  const active = document.activeElement;
+  if(!active) return;
+  const id = active.id || '';
+  // Only act on pred_ inputs (not selects — those use enter differently)
+  if(!id.startsWith('pred_') || active.tagName === 'SELECT') return;
+  e.preventDefault();
+  // Find all pred tegel toggle buttons (div with onclick togglePredVraag)
+  const tegels = Array.from(document.querySelectorAll('[id^="pv_"]'));
+  // Find which tegel is currently open
+  const openTegel = tegels.find(t => t.style.display !== 'none');
+  if(!openTegel) return;
+  // Save current
+  saveCurrentVoorspelling(false);
+  // Close current tegel
+  const curId = openTegel.id;
+  const curArrow = document.getElementById('arrow_' + curId);
+  openTegel.style.display = 'none';
+  if(curArrow) curArrow.style.transform = '';
+  // Open next tegel
+  const curIdx = tegels.indexOf(openTegel);
+  const next = tegels[curIdx + 1];
+  if(next){
+    next.style.display = 'block';
+    const nextArrow = document.getElementById('arrow_' + next.id);
+    if(nextArrow) nextArrow.style.transform = 'rotate(180deg)';
+    // Focus first input in next tegel
+    const inp = next.querySelector('input, select');
+    if(inp) setTimeout(()=>inp.focus(), 50);
+  }
+});
 
 // ── INIT ──
 loadState();
