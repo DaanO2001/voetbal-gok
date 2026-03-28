@@ -1569,13 +1569,15 @@ function renderAntwoordInput(v, waarde, prefix, antwoorden){
   if(v.type==='jn_met_sub'){
     const sub = v.subVraag;
     const subWaarde = antwoorden ? (antwoorden[sub.id]||'') : '';
-    const subFilled = subWaarde !== '';
     const showSub = waarde.toLowerCase()==='ja';
-    return `<select id="${id}" ${onchangeRender}><option value="">Kies...</option><option value="Ja" ${waarde==='Ja'?'selected':''}>Ja</option><option value="Nee" ${waarde==='Nee'?'selected':''}>Nee</option></select>
-    ${showSub ? `<div style="margin-top:10px;padding:10px 12px;background:var(--surface3);border-radius:10px;border:1px solid var(--border);">
+    const subDivId = `${prefix}_sub_${v.id}`;
+    // onchange: show/hide sub inline without re-render
+    const onchangeSub = `document.getElementById('${subDivId}').style.display=this.value==='Ja'?'block':'none';`;
+    return `<select id="${id}" onchange="${onchangeSub}"><option value="">Kies...</option><option value="Ja" ${waarde==='Ja'?'selected':''}>Ja</option><option value="Nee" ${waarde==='Nee'?'selected':''}>Nee</option></select>
+    <div id="${subDivId}" style="display:${showSub?'block':'none'};margin-top:10px;padding:10px 12px;background:var(--surface3);border-radius:10px;border:1px solid var(--border);">
       <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">↳ ${sub.tekst}</div>
       <input type="text" id="${prefix}_${sub.id}" value="${subWaarde}" placeholder="Naam speler..." autocapitalize="words" oninput="capitalizeInput(this)" style="border-radius:10px;">
-    </div>` : ''}`;
+    </div>`;
   }
 
   if(v.type==='score'){
@@ -1827,7 +1829,8 @@ function showToast(msg){
 loadState();
 renderInvullen();
 renderMatchup();
-checkStartTour();
+// Small delay so DOM is fully painted before showing popup
+setTimeout(checkStartTour, 400);
 </script>
 </body>
 </html>
